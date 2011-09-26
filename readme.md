@@ -25,7 +25,7 @@ public function behaviors()
 
 На текущий момент документация в процессе написания, поэтому будет показано несколько примеров использования.
 
-**Валидация**
+###Валидация
 
 ~~~
 [php]
@@ -51,7 +51,8 @@ $article->createdBy->group->name='Test';
 $article->withRelated->validate(array('comments'=>array('content'),'createdBy'=>array('name','group'=>array('name'))));
 ~~~
 
-**Вставка**
+###Вставка
+
 ~~~
 [php]
 $user=new User;
@@ -88,7 +89,8 @@ $article->createdBy=$user;
 $article->withRelated->insert(array('comments','tags'=>array('createdBy'),'createdBy'=>array('id','group_id','name','group'=>array('id','name'))));
 ~~~
 
-**Обновление (пример 1)**
+###Обновление (пример 1)
+
 ~~~
 [php]
 $article=Article::model()->findByPk(1);
@@ -103,7 +105,8 @@ $article->tags=array($tag1,$tag2);
 $article->withRelated->update(array('tags'));
 ~~~
 
-**Обновление (пример 2)**
+###Обновление (пример 2)
+
 ~~~
 [php]
 $article=Article::model()->with('tags')->findByPk(1);
