@@ -10,7 +10,7 @@
  * Allows to save related models with the main model.
  * All relation types supported.
  *
- * @version 0.50
+ * @version 0.51
  * @package yiiext.behaviors.model.wr
  */
 class WithRelatedBehavior extends CActiveRecordBehavior
@@ -18,8 +18,9 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 	/**
 	 * Validate main model and all it's related models recursively.
 	 * @param array $data attributes and relations.
+	 * @param boolean $clearErrors whether to call {@link CModel::clearErrors} before performing validation.
 	 * @param CActiveRecord $owner for internal needs.
-	 * @return boolean whether the validation succeeds.
+	 * @return boolean whether the validation is successful without any error.
 	 */
 	public function validate($data=null,$cleanErrors=true,$owner=null)
 	{
@@ -80,6 +81,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 	 * Insert main model and all it's related models recursively.
 	 * @param array $data attributes and relations.
 	 * @param CActiveRecord $owner for internal needs.
+	 * @return boolean whether the record(s) is inserted successfully.
 	 */
 	public function insert($data=null,$owner=null)
 	{
@@ -336,12 +338,15 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 			throw $e;
 		}
+
+		return true;
 	}
 
 	/**
 	 * Update main model and all it's related models recursively.
 	 * @param array $data attributes and relations.
 	 * @param CActiveRecord $owner for internal needs.
+	 * @return boolean whether the update is successful.
 	 */
 	public function update($data=null,$owner=null)
 	{
@@ -433,6 +438,8 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 			throw $e;
 		}
+
+		return true;
 	}
 
 	/**
