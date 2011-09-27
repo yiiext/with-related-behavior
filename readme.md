@@ -8,8 +8,8 @@ WithRelatedBehavior
 
 Скопируйте поведение в каталог extensions/wr вашего приложения и подключите в модели следующим образом:
 
-~~~
-[php]
+```php
+<?php
 public function behaviors()
 {
 	return array(
@@ -18,7 +18,7 @@ public function behaviors()
 		),
 	);
 }
-~~~
+```
 
 Использование
 -------------
@@ -27,8 +27,8 @@ public function behaviors()
 
 ###Валидация
 
-~~~
-[php]
+```php
+<?php
 $article=new Article;
 $article->title='Test';
 
@@ -48,13 +48,23 @@ $article->createdBy->name='Test';
 $article->createdBy->group=new Group;
 $article->createdBy->group->name='Test';
 
-$article->withRelated->validate(array('comments'=>array('content'),'createdBy'=>array('name','group'=>array('name'))));
-~~~
+$article->withRelated->validate(array(
+    'comments'=>array(
+        'content'
+    ),
+    'createdBy'=>array(
+        'name',
+        'group'=>array(
+            'name'
+        )
+    )
+));
+```
 
 ###Вставка
 
-~~~
-[php]
+```php
+<?php
 $user=new User;
 $user->name='Test';
 
@@ -86,13 +96,24 @@ $article->comments=array($comment1,$comment2,$comment3);
 
 $article->createdBy=$user;
 
-$article->withRelated->insert(array('comments','tags'=>array('createdBy'),'createdBy'=>array('id','group_id','name','group'=>array('id','name'))));
-~~~
+$article->withRelated->insert(array(
+    'comments',
+    'tags'=>array(
+        'createdBy'
+    ),
+    'createdBy'=>array(
+        'id','group_id','name',
+        'group'=>array(
+            'id','name'
+        )
+    )
+));
+```
 
 ###Обновление (пример 1)
 
-~~~
-[php]
+```php
+<?php
 $article=Article::model()->findByPk(1);
 $article->title='article1 updated';
 
@@ -103,12 +124,12 @@ $tag2->name='tag2';
 
 $article->tags=array($tag1,$tag2);
 $article->withRelated->update(array('tags'));
-~~~
+```
 
 ###Обновление (пример 2)
 
-~~~
-[php]
+```php
+<?php
 $article=Article::model()->with('tags')->findByPk(1);
 $article->title='article1 updated';
 
@@ -118,6 +139,6 @@ $tags[1]->name='tag2 updated';
 
 $article->tags=$tags;
 $article->withRelated->update(array('tags'));
-~~~
+```
 
 **Примечание:** вместо методов insert() и update() можно пользоваться методом save() по аналогии с CActiveRecord.
