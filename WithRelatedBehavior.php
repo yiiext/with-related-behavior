@@ -442,12 +442,12 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 		return true;
 	}
 
-    /**
-     * Save main model and all it's related models recursively.
-     * @param bool  $runValidation whether to perform validation before saving the record.
-     * @param array $data attributes and relations.
-     * @return boolean whether the saving succeeds.
-     */
+	/**
+	 * Save main model and all it's related models recursively.
+	 * @param bool  $runValidation whether to perform validation before saving the record.
+	 * @param array $data attributes and relations.
+	 * @return boolean whether the saving succeeds.
+	 */
 	public function save($runValidation=true,$data=null)
 	{
 		if(!$runValidation || $this->validate($data))
