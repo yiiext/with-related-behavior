@@ -22,7 +22,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 	 * @param CActiveRecord $owner for internal needs.
 	 * @return boolean whether the validation is successful without any error.
 	 */
-	public function validate($data=null,$cleanErrors=true,$owner=null)
+	public function validate($data=null,$clearErrors=true,$owner=null)
 	{
 		if($owner===null)
 			$owner=$this->getOwner();
@@ -43,7 +43,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			$newData=array_diff($data,$attributeNames);
 		}
 
-		$valid=$owner->validate($attributes,$cleanErrors);
+		$valid=$owner->validate($attributes,$clearErrors);
 
 		foreach($newData as $name=>$data)
 		{
@@ -60,17 +60,17 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 				foreach($related as $model)
 				{
 					if(is_array($data))
-						$valid=$this->validate($data,$cleanErrors,$model) && $valid;
+						$valid=$this->validate($data,$clearErrors,$model) && $valid;
 					else
-						$valid=$model->validate(null,$cleanErrors) && $valid;
+						$valid=$model->validate(null,$clearErrors) && $valid;
 				}
 			}
 			else
 			{
 				if(is_array($data))
-					$valid=$this->validate($data,$cleanErrors,$related) && $valid;
+					$valid=$this->validate($data,$clearErrors,$related) && $valid;
 				else
-					$valid=$related->validate(null,$cleanErrors) && $valid;
+					$valid=$related->validate(null,$clearErrors) && $valid;
 			}
 		}
 
@@ -442,11 +442,12 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 		return true;
 	}
 
-	/**
-	 * Save main model and all it's related models recursively.
-	 * @param array $data attributes and relations.
-	 * @param CActiveRecord $owner for internal needs.
-	 */
+    /**
+     * Save main model and all it's related models recursively.
+     * @param bool  $runValidation whether to perform validation before saving the record.
+     * @param array $data attributes and relations.
+     * @return boolean whether the saving succeeds.
+     */
 	public function save($runValidation=true,$data=null)
 	{
 		if(!$runValidation || $this->validate($data))
