@@ -162,13 +162,13 @@ $user->withRelated->save(array('profile'));
 
 ```php
 $post=new Post;
-$post->title='Relational saving is not a dream now.';
-$post->content='WithRelatedBehavior released...';
+$post->title='Relational saving is not a dream anymore.';
+$post->content='Since WithRelatedBehavior released...';
 
 $comment1=new Comment;
-$comment1->content='It was be hard.';
+$comment1->content='Was it hard?';
 $comment2=new Comment;
-$comment2->content='Yes, but we did this.';
+$comment2->content='Yes, but we made it.';
 
 $post->comments=array($comment1,$comment2);
 
@@ -179,8 +179,8 @@ $post->withRelated->save(array('comments'));
 
 ```php
 $post=new Post;
-$post->title='Relational saving is not a dream now.';
-$post->content='WithRelatedBehavior released...';
+$post->title='Relational saving is not a dream anymore.';
+$post->content='Since WithRelatedBehavior released...';
 
 $tag1=new Tag;
 $tag1->name='relation';
@@ -196,8 +196,8 @@ $post->withRelated->save(array('post'));
 
 ```php
 $post=new Post;
-$post->title='Relational saving is not a dream now.';
-$post->content='WithRelatedBehavior released...';
+$post->title='Relational saving is not a dream anymore.';
+$post->content='Since WithRelatedBehavior released...';
 
 $post->author=new User;
 $post->author->username='creocoder';
