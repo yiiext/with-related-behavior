@@ -95,7 +95,7 @@ class User extends CActiveRecord
 	 * @var string email
 	 */
 	...
-	public function behaviors()
+	public function relations()
 	{
 		return array(
 			'profile'=>array(self::HAS_ONE,'Profile','user_id'),
