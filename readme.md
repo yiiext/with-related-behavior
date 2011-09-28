@@ -255,127 +255,47 @@ $result=$post->withRelated->validate(array(
 
 ### Сложный пример использования расширения
 
-В процессе написания.
-
-Временная документация (сложные примеры)
-----------------------------------------
-
-Будет удалена после дописания разделов основного руководства.
-
-###Валидация
-
 ```php
 <?php
-$article=new Article;
-$article->title='Test';
+$post=new Post;
+$post->title='Post title';
+$post->content='Post content';
 
-$comment1=new Comment;
-$comment2=new Comment;
-$comment3=new Comment;
-
-$article->comments=array($comment1,$comment2,$comment3);
-
-$comment1->content='Test';
-$comment2->content='Test';
-$comment3->content='Test';
-
-$article->createdBy=new User;
-$article->createdBy->name='Test';
-
-$article->createdBy->group=new Group;
-$article->createdBy->group->name='Test';
-
-$article->withRelated->validate(array(
-    'comments'=>array(
-        'content'
-    ),
-    'createdBy'=>array(
-        'name',
-        'group'=>array(
-            'name'
-        )
-    )
-));
-```
-
-###Вставка
-
-```php
-<?php
 $user=new User;
-$user->name='Test';
+$user->username='someuser';
+$user->email='someuser@example.com';
 
-$user->group=new Group;
-$user->group->name='Test';
+$user->profile=new Profile;
+$user->profile->firstname='Vasya';
+$user->profile->lastname='Pupkin';
 
-$tag1=new Tag;
-$tag1->createdBy=$user;
-$tag1->name='test1';
-$tag2=new Tag;
-$tag2->createdBy=$user;
-$tag2->name='test2';
-$tag3=new Tag;
-$tag3->createdBy=$user;
-$tag3->name='test3';
-
-$article=new Article;
-$article->title='Test';
-$article->tags=array($tag1,$tag2,$tag3);
+$post->author=$user;
 
 $comment1=new Comment;
-$comment1->content='Test1';
+$comment1->author=$user;
+$comment1->content='Some content 1';
 $comment2=new Comment;
-$comment2->content='Test2';
-$comment3=new Comment;
-$comment3->content='Test3';
+$comment2->author=$user;
+$comment2->content='Some content 2';
 
-$article->comments=array($comment1,$comment2,$comment3);
-
-$article->createdBy=$user;
-
-$article->withRelated->insert(array(
-    'comments',
-    'tags'=>array(
-        'createdBy'
-    ),
-    'createdBy'=>array(
-        'id','group_id','name',
-        'group'=>array(
-            'id','name'
-        )
-    )
-));
-```
-
-###Обновление (пример 1)
-
-```php
-<?php
-$article=Article::model()->findByPk(1);
-$article->title='article1 updated';
+$post->comments=array($comment1,$comment2);
 
 $tag1=new Tag;
 $tag1->name='tag1';
 $tag2=new Tag;
 $tag2->name='tag2';
 
-$article->tags=array($tag1,$tag2);
-$article->withRelated->update(array('tags'));
+$post->tags=array($tag1,$tag2);
+
+$post->withRelated->save(array(
+	'author'=>array(
+		'profile',
+	),
+	'comments'=>array(
+		'author',
+	),
+	'tags',
+));
 ```
 
-###Обновление (пример 2)
-
-```php
-<?php
-$article=Article::model()->with('tags')->findByPk(1);
-$article->title='article1 updated';
-
-$tags=$article->tags;
-$tags[0]->name='tag1 updated';
-$tags[1]->name='tag2 updated';
-
-$article->tags=$tags;
-$article->withRelated->update(array('tags'));
-```
-
-**Примечание:** вместо методов insert() и update() можно пользоваться методом save() по аналогии с CActiveRecord.
+Для того, чтобы расширению сохранить post и связанные модели, расширение составляет план сохранения. В данном примере видно, что перед началом сохранения необходимо вначале сохранить модель user и связанную с ней модель profile и только затем появится возможность сохранить post, затем comments (при этом author все тот же user), после чего сохраняются tags. Сохранение всех моделей оборачивается в транзакцию. Все перечисленные действия ложатся на плечи расширения.
