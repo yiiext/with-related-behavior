@@ -10,7 +10,7 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		':article_tag',
 	);
 
-	/*public function testValidate()
+	public function testValidate()
 	{
 		$article=new Article;
 		$this->assertFalse($article->withRelated->validate());
@@ -115,7 +115,7 @@ class WithRelatedBehaviorTest extends CDbTestCase
 
 		$article->tags=$tags;
 		$article->withRelated->update(array('tags'));
-	}*/
+	}
 
 	public function testUpdateModelDeleteRelated()
 	{
