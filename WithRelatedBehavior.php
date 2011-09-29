@@ -10,7 +10,7 @@
  * Allows to save related models with the main model.
  * All relation types supported.
  *
- * @version 0.51
+ * @version 0.52
  * @package yiiext.behaviors.model.wr
  */
 class WithRelatedBehavior extends CActiveRecordBehavior
@@ -81,7 +81,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 	 * Insert main model and all it's related models recursively.
 	 * @param array $data attributes and relations.
 	 * @param CActiveRecord $owner for internal needs.
-	 * @return boolean whether the record(s) is inserted successfully.
+	 * @return boolean whether the record is inserted successfully.
 	 */
 	public function insert($data=null,$owner=null)
 	{
@@ -167,8 +167,8 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 					$queue[]=array($relationClass,$relatedClass,$relations[$name]->foreignKey,$name,$data);
 			}
 
-			if($owner->getIsNewRecord())
-				$owner->insert($attributes);
+			if($owner->getIsNewRecord() && !$owner->insert($attributes))
+				return false;
 
 			foreach($queue as $pack)
 			{
@@ -330,6 +330,8 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 			if($extTransFlag===null)
 				$transaction->commit();
+
+			return true;
 		}
 		catch(Exception $e)
 		{
@@ -338,8 +340,6 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 			throw $e;
 		}
-
-		return true;
 	}
 
 	/**
@@ -377,7 +377,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 				$newData=array_diff($data,$attributeNames);
 			}
 
-			$owner->update($attributes);
+			$result=$owner->update($attributes);
 
 			foreach($newData as $name=>$data)
 			{
@@ -439,7 +439,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			throw $e;
 		}
 
-		return true;
+		return $result;
 	}
 
 	/**
