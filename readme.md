@@ -128,8 +128,8 @@ class Profile extends CActiveRecord
 ```php
 <?php
 $post->save(array(
-	'id','title',			// атрибуты модели
-	'comments','tags'		// связи модели
+	'id','title',     // атрибуты модели
+	'comments','tags' // связи модели
 ));
 ```
 
@@ -139,8 +139,8 @@ $post->save(array(
 <?php
 $post->save(array(
 	'comments'=>array(
-		'id','content',		// атрибуты моделей связи comments
-		'author',			// связь author в моделях связи comments
+		'id','content', // атрибуты моделей связи comments
+		'author',       // связь author в моделях связи comments
 	),
 ));
 ```
@@ -164,7 +164,7 @@ $user->profile=new Profile;
 $user->profile->firstname='Alexander';
 $user->profile->lastname='Kochetov';
 
-$user->withRelated->save(array('profile'));
+$user->withRelated->save(true,array('profile'));
 ```
 
 #### HAS_MANY
@@ -182,7 +182,7 @@ $comment2->content='Yes, but we made it.';
 
 $post->comments=array($comment1,$comment2);
 
-$post->withRelated->save(array('comments'));
+$post->withRelated->save(true,array('comments'));
 ```
 
 #### MANY_MANY
@@ -200,7 +200,7 @@ $tag2->name='save';
 
 $post->tags=array($tag1,$tag2);
 
-$post->withRelated->save(array('post'));
+$post->withRelated->save(true,array('post'));
 ```
 
 #### BELONGS_TO
@@ -215,7 +215,7 @@ $post->author=new User;
 $post->author->username='creocoder';
 $post->author->email='creocoder@gmail.com';
 
-$post->withRelated->save(array('author'));
+$post->withRelated->save(true,array('author'));
 ```
 
 **Примечание:** Как видно из примеров, вне зависимости от типа связи API остается неизменным. Также стоит отметить, что перед началом сохранения запускается транзакция, в случае если СУБД поддерживает эту возможность. При этом если транзакция начата пользователем самостоятельно к примеру в контроллере — поведение определяет это и не проводит старт транзакции. По умолчанию по аналогии с методом `CActiveRecord::save()`, метод `WithRelatedBehavior::save()` проводит валидацию и сохранение происходит только в том случае, если все модели подготовленные для записи валидны. Это можно изменить выставив параметр `$runValidation` метода в `false`.
@@ -287,7 +287,7 @@ $tag2->name='tag2';
 
 $post->tags=array($tag1,$tag2);
 
-$post->withRelated->save(array(
+$post->withRelated->save(true,array(
 	'author'=>array(
 		'profile',
 	),
