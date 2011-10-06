@@ -11,13 +11,6 @@ class Tag extends CActiveRecord
 		return 'tag';
 	}
 
-	public function relations()
-	{
-		return array(
-			'createdBy'=>array(self::BELONGS_TO,'User','created_by_id'),
-		);
-	}
-
 	public function rules()
 	{
 		return array(

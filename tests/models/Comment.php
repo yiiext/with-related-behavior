@@ -11,6 +11,13 @@ class Comment extends CActiveRecord
 		return 'comment';
 	}
 
+	public function relations()
+	{
+		return array(
+			'user'=>array(self::BELONGS_TO,'User','user_id'),
+		);
+	}
+
 	public function rules()
 	{
 		return array(

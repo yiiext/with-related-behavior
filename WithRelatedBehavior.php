@@ -10,7 +10,7 @@
  * Allows to save related models with the main model.
  * All relation types supported.
  *
- * @version 0.52
+ * @version 0.60
  * @package yiiext.behaviors.model.wr
  */
 class WithRelatedBehavior extends CActiveRecordBehavior
@@ -78,12 +78,25 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 	}
 
 	/**
-	 * Insert main model and all it's related models recursively.
+	 * Save main model and all it's related models recursively.
+	 * @param bool $runValidation whether to perform validation before saving the record.
+	 * @param array $data attributes and relations.
+	 * @return boolean whether the saving succeeds.
+	 */
+	public function save($runValidation=true,$data=null)
+	{
+		if(!$runValidation || $this->validate($data))
+			return $this->internalSave($data);
+		else
+			return false;
+	}
+
+	/**
 	 * @param array $data attributes and relations.
 	 * @param CActiveRecord $owner for internal needs.
-	 * @return boolean whether the record is inserted successfully.
+	 * @return boolean whether the saving succeeds.
 	 */
-	public function insert($data=null,$owner=null)
+	private function internalSave($data=null,$owner=null)
 	{
 		if($owner===null)
 			$owner=$this->getOwner();
@@ -137,9 +150,9 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 					$related=$owner->getRelated($name);
 
 					if($data!==null)
-						$this->insert($data,$related);
-					else if($related->getIsNewRecord())
-						$related->insert();
+						$this->internalSave($data,$related);
+					else
+						$related->getIsNewRecord() ? $related->insert() : $related->update();
 
 					$relatedTableSchema=CActiveRecord::model($relatedClass)->getTableSchema();
 					$fks=preg_split('/\s*,\s*/',$relations[$name]->foreignKey,-1,PREG_SPLIT_NO_EMPTY);
@@ -167,7 +180,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 					$queue[]=array($relationClass,$relatedClass,$relations[$name]->foreignKey,$name,$data);
 			}
 
-			if($owner->getIsNewRecord() && !$owner->insert($attributes))
+			if(!($owner->getIsNewRecord() ? $owner->insert($attributes) : $owner->update($attributes)))
 				return false;
 
 			foreach($queue as $pack)
@@ -201,9 +214,9 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 						}
 
 						if($data===null)
-							$related->insert();
+							$related->getIsNewRecord() ? $related->insert() : $related->update();
 						else
-							$this->insert($data,$related);
+							$this->internalSave($data,$related);
 					break;
 					case CActiveRecord::HAS_MANY:
 						$relatedTableSchema=CActiveRecord::model($relatedClass)->getTableSchema();
@@ -235,9 +248,9 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 								$model->$fk=$owner->$pk;
 
 							if($data===null)
-								$model->insert();
+								$model->getIsNewRecord() ? $model->insert() : $model->update();
 							else
-								$this->insert($data,$model);
+								$this->internalSave($data,$model);
 						}
 					break;
 					case CActiveRecord::MANY_MANY:
@@ -309,10 +322,15 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 						foreach($related as $model)
 						{
+							$newFlag=$model->getIsNewRecord();
+
 							if($data===null)
-								$model->insert();
+								$newFlag ? $model->insert() : $model->update();
 							else
-								$this->insert($data,$model);
+								$this->internalSave($data,$model);
+
+							if(!$newFlag)
+								continue;
 
 							$joinTableAttributes=array();
 
@@ -340,119 +358,5 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 			throw $e;
 		}
-	}
-
-	/**
-	 * Update main model and all it's related models recursively.
-	 * @param array $data attributes and relations.
-	 * @param CActiveRecord $owner for internal needs.
-	 * @return boolean whether the update is successful.
-	 */
-	public function update($data=null,$owner=null)
-	{
-		if($owner===null)
-			$owner=$this->getOwner();
-
-		$db=$owner->getDbConnection();
-		$extTransFlag=$db->getCurrentTransaction();
-
-		if($extTransFlag===null)
-			$transaction=$db->beginTransaction();
-
-		try
-		{
-			if($data===null)
-			{
-				$attributes=null;
-				$newData=array();
-			}
-			else
-			{
-				$attributeNames=$owner->attributeNames();
-				$attributes=array_intersect($data,$attributeNames);
-
-				if($attributes===array())
-					$attributes=null;
-
-				$newData=array_diff($data,$attributeNames);
-			}
-
-			$result=$owner->update($attributes);
-
-			foreach($newData as $name=>$data)
-			{
-				if(!is_array($data))
-					$name=$data;
-
-				if(!$owner->hasRelated($name))
-					continue;
-
-				$related=$owner->getRelated($name);
-
-				if(is_array($related))
-				{
-					foreach($related as $model)
-					{
-						if(is_array($data))
-						{
-							if($model->getIsNewRecord())
-								$this->insert($data,$model);
-							else
-								$this->update($data,$model);
-						}
-						else
-						{
-							if($model->getIsNewRecord())
-								$model->insert();
-							else
-								$model->update();
-						}
-					}
-				}
-				else
-				{
-					if(is_array($data))
-					{
-						if($related->getIsNewRecord())
-							$this->insert($data,$related);
-						else
-							$this->update($data,$related);
-					}
-					else
-					{
-						if($related->getIsNewRecord())
-							$related->insert();
-						else
-							$related->update();
-					}
-				}
-			}
-
-			if($extTransFlag===null)
-				$transaction->commit();
-		}
-		catch(Exception $e)
-		{
-			if($extTransFlag===null)
-				$transaction->rollBack();
-
-			throw $e;
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Save main model and all it's related models recursively.
-	 * @param bool  $runValidation whether to perform validation before saving the record.
-	 * @param array $data attributes and relations.
-	 * @return boolean whether the saving succeeds.
-	 */
-	public function save($runValidation=true,$data=null)
-	{
-		if(!$runValidation || $this->validate($data))
-			return $this->getOwner()->getIsNewRecord() ? $this->insert($data) : $this->update($data);
-		else
-			return false;
 	}
 }

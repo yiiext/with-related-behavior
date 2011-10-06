@@ -10,120 +10,141 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		':article_tag',
 	);
 
-	public function testValidate()
+	public function testSave()
 	{
 		$article=new Article;
-		$this->assertFalse($article->withRelated->validate());
 
-		$article->title='Test';
-		$this->assertTrue($article->withRelated->validate());
-
-		$comment1=new Comment;
-		$comment2=new Comment;
-		$comment3=new Comment;
-
-		$article->comments=array($comment1,$comment2,$comment3);
-		$this->assertFalse($article->withRelated->validate(array('comments')));
-
-		$comment1->content='Test';
-		$comment2->content='Test';
-		$comment3->content='Test';
-		$this->assertTrue($article->withRelated->validate(array('comments')));
-		$this->assertTrue($article->withRelated->validate(array('comments'=>array('content'))));
-
-		$article->createdBy=new User;
-		$this->assertFalse($article->withRelated->validate(array('comments','createdBy')));
-
-		$article->createdBy->name='Test';
-		$this->assertTrue($article->withRelated->validate(array('comments','createdBy')));
-		$this->assertTrue($article->withRelated->validate(array('comments'=>array('content'),'createdBy'=>array('name'))));
-
-		$article->createdBy->group=new Group;
-		$this->assertFalse($article->withRelated->validate(array('comments','createdBy'=>array('group'))));
-
-		$article->createdBy->group->name='Test';
-		$this->assertTrue($article->withRelated->validate(array('comments','createdBy'=>array('group'))));
-		$this->assertTrue($article->withRelated->validate(array('comments'=>array('content'),'createdBy'=>array('name','group'=>array('name')))));
-	}
-
-	public function testInsert()
-	{
 		$user=new User;
-		$user->id=100;
-		$user->name='Test';
+
+		$article->user=$user;
 
 		$user->group=new Group;
-		$user->group->id=100;
-		$user->group->name='Test';
-
-		$tag1=new Tag;
-		$tag1->createdBy=$user;
-		$tag1->name='test1';
-		$tag2=new Tag;
-		$tag2->createdBy=$user;
-		$tag2->name='test2';
-		$tag3=new Tag;
-		$tag3->createdBy=$user;
-		$tag3->name='test3';
-
-		$article=new Article;
-		$article->id=100;
-		$article->title='Test';
-		$article->tags=array($tag1,$tag2,$tag3);
 
 		$comment1=new Comment;
-		$comment1->id=100;
-		$comment1->content='Test1';
+		$comment1->user=$user;
+
 		$comment2=new Comment;
-		$comment2->id=101;
-		$comment2->content='Test2';
-		$comment3=new Comment;
-		$comment3->id=102;
-		$comment3->content='Test3';
+		$comment2->user=$user;
 
-		$article->comments=array($comment1,$comment2,$comment3);
-		$article->createdBy=$user;
-		$article->withRelated->insert(array('comments','tags'=>array('createdBy'),'createdBy'=>array('id','group_id','name','group'=>array('id','name'))));
-	}
+		$article->comments=array($comment1,$comment2);
 
-	public function testUpdateModelInsertRelated()
-	{
-		$article=Article::model()->findByPk(1);
-		$article->title='article1 updated';
+		$tag1=new Tag;
+		$tag2=new Tag;
 
-		$tag3=new Tag;
-		$tag3->id=3;
-		$tag3->created_by_id=1;
-		$tag3->name='tag3';
-		$tag4=new Tag;
-		$tag4->id=4;
-		$tag4->created_by_id=1;
-		$tag4->name='tag4';
+		$article->tags=array($tag1,$tag2);
 
-		$article->tags=array($tag3,$tag4);
-		$article->withRelated->update(array('tags'));
-	}
+		$result=$article->withRelated->save(true,array(
+			'user'=>array('group'),
+			'comments'=>array('user'),
+			'tags',
+		));
 
-	public function testUpdateModelUpdateRelated()
-	{
-		$article=Article::model()->with('tags')->findByPk(1);
-		$article->title='article1 updated';
+		$this->assertFalse($result);
+
+		$article->title='article1';
+		$user->name='user1';
+		$user->group->name='group1';
+		$comment1->content='comment1';
+		$comment2->content='comment2';
+		$tag1->name='tag1';
+		$tag2->name='tag2';
+
+		$result=$article->withRelated->save(true,array(
+			'user'=>array('group'),
+			'comments'=>array('user'),
+			'tags',
+		));
+
+		$this->assertTrue($result);
+
+		$article=Article::model()->with(array(
+			'user'=>array(
+				'with'=>'group',
+				'alias'=>'article_user',
+			),
+			'comments'=>array(
+				'with'=>array(
+					'user'=>array(
+						'alias'=>'comment_user',
+					),
+				),
+			),
+			'tags',
+		))->find();
+
+		$this->assertNotNull($article);
+		$this->assertEquals('article1',$article->title);
+		$this->assertNotNull($article->user);
+		$this->assertEquals('user1',$article->user->name);
+		$this->assertNotNull($article->user->group);
+		$this->assertEquals('group1',$article->user->group->name);
+		$this->assertEquals(2,count($article->comments));
+		$this->assertEquals('comment1',$article->comments[0]->content);
+		$this->assertEquals('comment2',$article->comments[1]->content);
+		$this->assertNotNull($article->comments[0]->user);
+		$this->assertEquals('user1',$article->comments[0]->user->name);
+		$this->assertNotNull($article->comments[1]->user);
+		$this->assertEquals('user1',$article->comments[1]->user->name);
+		$this->assertEquals(2,count($article->tags));
+		$this->assertEquals('tag1',$article->tags[0]->name);
+		$this->assertEquals('tag2',$article->tags[1]->name);
+
+		$article=Article::model()->with('comments')->find();
+
+		$comments=$article->comments;
+		$comments[0]->content='comment1 update';
+		$comments[1]->content='comment2 update';
+
+		$comment=new Comment;
+		$comment->user=$user;
+		$comment->content='comment3';
+
+		$comments[]=$comment;
+
+		$comment=new Comment;
+		$comment->user=$user;
+		$comment->content='comment4';
+
+		$comments[]=$comment;
+
+		$article->comments=$comments;
+
+		$result=$article->withRelated->save(true,array('comments'=>array('user')));
+		$this->assertTrue($result);
+
+		$article=Article::model()->with('comments')->find();
+		$this->assertEquals(4,count($article->comments));
+		$this->assertEquals('comment1 update',$article->comments[0]->content);
+		$this->assertEquals('comment2 update',$article->comments[1]->content);
+		$this->assertEquals('comment3',$article->comments[2]->content);
+		$this->assertEquals('comment4',$article->comments[3]->content);
+
+		$article=Article::model()->with('tags')->find();
 
 		$tags=$article->tags;
-		$tags[0]->name='tag1 updated';
-		$tags[1]->name='tag2 updated';
+		$tags[0]->name='tag1 update';
+		$tags[1]->name='tag2 update';
+
+		$tag=new Tag;
+		$tag->name='tag3';
+
+		$tags[]=$tag;
+
+		$tag=new Tag;
+		$tag->name='tag4';
+
+		$tags[]=$tag;
 
 		$article->tags=$tags;
-		$article->withRelated->update(array('tags'));
-	}
 
-	public function testUpdateModelDeleteRelated()
-	{
-		$article=Article::model()->with('tags')->findByPk(1);
-		$article->title='article1 updated';
+		$result=$article->withRelated->save(true,array('tags'));
+		$this->assertTrue($result);
 
-		$article->tags=array();
-
-		$article->withRelated->update(array('tags'));
+		$article=Article::model()->with('tags')->find();
+		$this->assertEquals(4,count($article->tags));
+		$this->assertEquals('tag1 update',$article->tags[0]->name);
+		$this->assertEquals('tag2 update',$article->tags[1]->name);
+		$this->assertEquals('tag3',$article->tags[2]->name);
+		$this->assertEquals('tag4',$article->tags[3]->name);
 	}
 }
