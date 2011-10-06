@@ -1,12 +1,16 @@
 WithRelatedBehavior
 ===================
 
-Это поведение позволяет проводить валидацию, вставку, обновление, а также сохранение модели и всех её связанных моделей. Поддерживаются все типы связей. Все запросы к СУБД автоматически оборачиваются в транзакции. Также поддерживается ручной вызов транзакций. Композитные ключи тоже поддерживаются.
+This behavior allows you to validate, insert, update and save a model along with
+models from its relations. It supports all relation types. All DB queries are
+wrapped into transactions automatically but there's a support for manual transaction
+handling. Composite keys are supported as well.
 
-Установка и настройка
----------------------
+Installation and configuration
+------------------------------
 
-Скопируйте поведение в каталог extensions/wr вашего приложения и подключите в модели следующим образом:
+Copy behavior to `extensions/wr` directory located inside your application and add
+it to the model of your choice the following way:
 
 ```php
 <?php
@@ -22,22 +26,22 @@ public function behaviors()
 ...
 ```
 
-Модели используемые в примерах
-------------------------------
+Models that will be used in this doc examples
+---------------------------------------------
 
-В моделях phpDoc тегами `@var` показаны реальные поля присутствующие в таблицах.
+In the models below real DB fields are marked with `@property`.
 
-### Модель Post
+### Post
 
 ```php
 <?php
 class Post extends CActiveRecord
 {
 	/**
-	 * @var integer id
-	 * @var integer author_id
-	 * @var string title
-	 * @var string content 
+	 * @property integer id
+	 * @property integer author_id
+	 * @property string title
+	 * @property string content
 	 */
 
 	...
@@ -53,46 +57,46 @@ class Post extends CActiveRecord
 }
 ```
 
-### Модель Comment
+### Comment
 
 ```php
 <?php
 class Comment extends CActiveRecord
 {
 	/**
-	 * @var integer id
-	 * @var integer post_id
-	 * @var string content
+	 * @property integer id
+	 * @property integer post_id
+	 * @property string content
 	 */
 	...
 }
 ```
 
-### Модель Tag
+### Tag
 
 ```php
 <?php
 class Tag extends CActiveRecord
 {
 	/**
-	 * @var integer id
-	 * @var string name
+	 * @property integer id
+	 * @property string name
 	 */
 	...
 }
 ```
 
-### Модель User
+### User
 
 ```php
 <?php
 class User extends CActiveRecord
 {
 	/**
-	 * @var integer id
-	 * @var string username
-	 * @var string password
-	 * @var string email
+	 * @property integer id
+	 * @property string username
+	 * @property string password
+	 * @property string email
 	 */
 	...
 	public function relations()
@@ -105,52 +109,57 @@ class User extends CActiveRecord
 }
 ```
 
-### Модель Profile
+### Profile
 
 ```php
 <?php
 class Profile extends CActiveRecord
 {
 	/**
-	 * @var integer user_id
-	 * @var string firstname
-	 * @var string lastname
+	 * @property integer user_id
+	 * @property string firstname
+	 * @property string lastname
 	 */
 	...
 }
 ```
 
-Формат параметра $data для всех методов
----------------------------------------
+Format of the $data parameter for all methods where it's used
+-------------------------------------------------------------
 
-Этот параметр представляет собой ассоциативный массив, где в качестве значений указывается название атрибута, либо название связи.
+This parameter accepts an associative array where values are attribute or relation
+names.
 
 ```php
 <?php
 $post->save(array(
-	'id','title',     // атрибуты модели
-	'comments','tags' // связи модели
+	'id','title',     // model attributes
+	'comments','tags' // model relations
 ));
 ```
 
-При этом название связи можно указать также в виде ключа, значение которого — новый массив `$data`. Таким образом глубина данных вложенных массивов может быть бесконечной.
+The name of the relation can be specified as a key. In this case its value is another
+`$data` array with the same rules. So you there's no limit in how many times you can
+nest these.
 
 ```php
 <?php
 $post->save(array(
 	'comments'=>array(
-		'id','content', // атрибуты моделей связи comments
-		'author',       // связь author в моделях связи comments
+		'id','content', // comments relation attributes
+		'author',       // author relation inside comments relation models
 	),
 ));
 ```
 
-**Примечание:** Если не указать атрибуты, то будут сохранены все. Для связей действует обратное правило. Будут сохранены модели только тех связей, которые явно указаны.
+**Note:** If you'll not specify any attributes, all attributes will be saved.
+For relations it's the opposite: you should specify relations explicitly in order
+for these to be saved.
 
-Использование
--------------
+Usage
+-----
 
-### Типы связей
+### Relation types
 
 #### HAS_ONE
 
@@ -218,12 +227,22 @@ $post->author->email='creocoder@gmail.com';
 $post->withRelated->save(true,array('author'));
 ```
 
-**Примечание:** Как видно из примеров, вне зависимости от типа связи API остается неизменным. Также стоит отметить, что перед началом сохранения запускается транзакция, в случае если СУБД поддерживает эту возможность. При этом если транзакция начата пользователем самостоятельно к примеру в контроллере — поведение определяет это и не проводит старт транзакции. По умолчанию по аналогии с методом `CActiveRecord::save()`, метод `WithRelatedBehavior::save()` проводит валидацию и сохранение происходит только в том случае, если все модели подготовленные для записи валидны. Это можно изменить выставив параметр `$runValidation` метода в `false`.
+**Note:** As you can see, API stays the same no matter which relation type is used.
+Also it worth mentioning that a transaction is started before saving if DB supports it.
+If transaction was already started manually, behavior detects it and doesn't
+start its own transaction. By default, same as `CActiveRecord::save()` does,
+`WithRelatedBehavior::save()` validates data and starts saving it only if all
+models it's going to save are valid. You can disable validation by passing `false`
+to `$runValidation` parameter.
 
-Комплексная рекурсивная валидация
----------------------------------
+Recursive composite validation
+------------------------------
 
-В отличие от штатного `CModel::validate()`, метод `WithRelatedBehavior::validate()` проводит комплексную валидацию модели и всех связанных моделей. Результат валидации возвращается в виде булева значения. В случае если хотябы одна из моделей, принимающих участие в валидации невалидна, результат работы метода — `false`. Если все модели валидны, результат работы — `true`. Возможно ограничение валидации по атрибутам моделей. Это показано в следующем примере:
+As opposed to standard `CModel::validate()` method, `WithRelatedBehavior::validate()`
+does composite model validation. That means it validates all related models as
+well. Validation result is returned as a boolean value. If any of the models is not valid
+than result will be `false`. If all models are valid than result will be `true`.
+Additionally you can limit validation to model attributes as follows:
 
 ```php
 <?php
@@ -239,21 +258,21 @@ $comment2->content='Yes, but we made it.';
 $post->comments=array($comment1,$comment2);
 
 $result=$post->withRelated->validate(array(
-	'title',		// будет проверен только атрибут `title` модели Post
+	'title',		// only `title` attribute of the Post model will be validated
 	'comments'=>array(
-		'content',	// будет проверен только атрибут `content` модели Comment
+		'content',	// only `content` attribute of the Comment model will be validated
 	),
 ));
 ```
 
-Продвинутое использование
--------------------------
+Advanced usage
+--------------
 
-### Интеграция собственных стратегий обновления
+### Using custom update strategies
 
-В процессе написания.
+TBD.
 
-### Сложный пример использования расширения
+### An advanced usage example
 
 ```php
 <?php
@@ -298,4 +317,8 @@ $post->withRelated->save(true,array(
 ));
 ```
 
-Для того, чтобы сохранить `post` и связанные модели, расширение составляет план сохранения. В данном примере видно, что перед началом сохранения необходимо вначале сохранить модель `user` и связанную с ней модель `profile` и только затем появится возможность сохранить `post`, затем `comments` (при этом `author` всё тот же `user`), после чего сохраняются `tags`. Сохранение всех моделей оборачивается в транзакцию. Все перечисленные действия ложатся на плечи расширения.
+In order to save `post` and related models an extension builds saving plan first.
+In the example above that before saving we need to save `user` model and its related
+`profile`. After doing it we'll be able to save `post`. Then goes `comments`
+(`author` is the same `user`). Last `tags` is saved. Actions mentioned are executed
+inside a transaction. Extension takes care about all these.
