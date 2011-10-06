@@ -3,12 +3,12 @@
  * WithRelatedBehavior class file.
  *
  * @author Alexander Kochetov <creocoder@gmail.com>
- * @link http://code.google.com/p/yiiext/
+ * @link https://github.com/yiiext/with-related-behavior
  */
 
 /**
- * Allows to save related models with the main model.
- * All relation types supported.
+ * Allows you to save related models along with the main model.
+ * All relation types are supported.
  *
  * @version 0.60
  * @package yiiext.behaviors.model.wr
