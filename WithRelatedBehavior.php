@@ -10,7 +10,7 @@
  * Allows you to save related models along with the main model.
  * All relation types are supported.
  *
- * @version 0.60
+ * @version 0.61
  * @package yiiext.behaviors.model.wr
  */
 class WithRelatedBehavior extends CActiveRecordBehavior
@@ -320,6 +320,9 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 							throw new CDbException(Yii::t('yii','The relation "{relation}" in active record class "{class}" is specified with an incomplete foreign key. The foreign key must consist of columns referencing both joining tables.',
 								array('{class}'=>get_class($owner),'{relation}'=>$name)));
 
+						$insertAttributes=array();
+						$deleteAttributes=array();
+
 						foreach($related as $model)
 						{
 							$newFlag=$model->getIsNewRecord();
@@ -329,9 +332,6 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 							else
 								$this->internalSave($data,$model);
 
-							if(!$newFlag)
-								continue;
-
 							$joinTableAttributes=array();
 
 							foreach($ownerMap as $pk=>$fk)
@@ -340,8 +340,21 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 							foreach($relatedMap as $pk=>$fk)
 								$joinTableAttributes[$fk]=$model->$pk;
 
-							$builder->createInsertCommand($joinTable,$joinTableAttributes)->execute();
+							if(!$newFlag)
+								$deleteAttributes[]=$joinTableAttributes;
+
+							$insertAttributes[]=$joinTableAttributes;
 						}
+
+						if($deleteAttributes!==array())
+						{
+							$condition=$builder->createInCondition($joinTable,array_merge(array_values($ownerMap),array_values($relatedMap)),$deleteAttributes);
+							$criteria=$builder->createCriteria($condition);
+							$command=$builder->createDeleteCommand($joinTable,$criteria)->execute();
+						}
+
+						foreach($insertAttributes as $attributes)
+							$builder->createInsertCommand($joinTable,$attributes)->execute();
 					break;
 				}
 			}
