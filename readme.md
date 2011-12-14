@@ -132,7 +132,7 @@ names.
 
 ```php
 <?php
-$post->save(array(
+$post->withRelated->save(array(
 	'id','title',     // model attributes
 	'comments','tags' // model relations
 ));
@@ -144,7 +144,7 @@ nest these.
 
 ```php
 <?php
-$post->save(array(
+$post->withRelated->save(array(
 	'comments'=>array(
 		'id','content', // comments relation attributes
 		'author',       // author relation inside comments relation models
