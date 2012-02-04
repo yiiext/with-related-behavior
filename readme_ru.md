@@ -132,7 +132,7 @@ class Profile extends CActiveRecord
 
 ```php
 <?php
-$post->withRelated->save(array(
+$post->withRelated->save(true,array(
 	'id','title',     // атрибуты модели
 	'comments','tags' // связи модели
 ));
@@ -143,7 +143,7 @@ $post->withRelated->save(array(
 
 ```php
 <?php
-$post->withRelated->save(array(
+$post->withRelated->save(true,array(
 	'comments'=>array(
 		'id','content', // атрибуты моделей связи comments
 		'author',       // связь author в моделях связи comments
