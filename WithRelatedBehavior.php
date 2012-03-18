@@ -11,7 +11,7 @@
  * All relation types are supported.
  *
  * @version 0.61
- * @package yiiext.behaviors.model.wr
+ * @package yiiext.with-related-behavior
  */
 class WithRelatedBehavior extends CActiveRecordBehavior
 {
