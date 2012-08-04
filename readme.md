@@ -1,6 +1,8 @@
 WithRelatedBehavior
 ===================
 
+The most powerful and smart expansion for validate/saving/linking/unlinking.
+
 This behavior allows you to validate, insert, update and save a model along with
 models from its relations. It supports all relation types. All DB queries are
 wrapped into transactions automatically but there's a support for manual transaction
@@ -265,12 +267,13 @@ $result=$post->withRelated->validate(array(
 ));
 ```
 
-Advanced usage
---------------
-
-### Using custom update strategies
+Linking and unlinking
+---------------------
 
 TBD.
+
+Advanced usage
+--------------
 
 ### An advanced usage example
 
@@ -322,3 +325,8 @@ In the example above that before saving we need to save `user` model and its rel
 `profile`. After doing it we'll be able to save `post`. Then goes `comments`
 (`author` is the same `user`). Last `tags` is saved. Actions mentioned are executed
 inside a transaction. Extension takes care about all these.
+
+Compare with other solutions
+----------------------------
+
+TBD.
