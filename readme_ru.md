@@ -1,7 +1,7 @@
 WithRelatedBehavior
 ===================
 
-[![Build Status](https://secure.travis-ci.org/resurtm/with-related-behavior.png?branch=travis-ci-2)](https://travis-ci.org/resurtm/with-related-behavior)
+[![Build Status](https://secure.travis-ci.org/yiiext/with-related-behavior.png?branch=master)](https://travis-ci.org/resurtm/with-related-behavior)
 
 Самое мощное и продуманное расширение для валидации/сохранения/линковки/делинковки.
 
