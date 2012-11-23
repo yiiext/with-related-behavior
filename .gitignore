@@ -11,3 +11,6 @@ nbproject
 
 # windows thumbnail cache
 Thumbs.db
+
+# temporary yii distribution
+yii

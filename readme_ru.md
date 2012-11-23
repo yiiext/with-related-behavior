@@ -1,6 +1,8 @@
 WithRelatedBehavior
 ===================
 
+[![Build Status](https://secure.travis-ci.org/yiiext/with-related-behavior.png?branch=master)](https://travis-ci.org/yiiext/with-related-behavior)
+
 Самое мощное и продуманное расширение для валидации/сохранения/линковки/делинковки.
 
 Это поведение позволяет проводить валидацию, вставку, обновление, а также
