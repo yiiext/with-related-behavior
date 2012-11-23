@@ -212,7 +212,7 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		$user6->group=new Group();
 		$user6->group->name='Linux Kernel Team';
 		$user6->attributes=array('firstName'=>'Andrew3','lastName'=>'Morton','name'=>'ignoredString');
-		$result=$user6->withRelated->save(true,array('group','firstName','lastName','name','group_id'));
+		$result=$user6->withRelated->save(true,array('group','name','group_id'));
 		$this->assertTrue($result);
 		$this->assertEmpty($user6->group->errors);
 		$this->assertEmpty($user6->errors);
