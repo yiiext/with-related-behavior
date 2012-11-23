@@ -35,12 +35,18 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 		else
 		{
 			$attributeNames=$owner->attributeNames();
-			$attributes=array_intersect($data,$attributeNames);
+			// array_intersect must not be used here because when error_reporting is -1 notice will happen
+			// since $data array contains not just scalar string values
+			$attributes=array_uintersect($data,$attributeNames,
+				create_function('$x,$y','return !is_string($x) || !is_string($y) ? -1 : strcmp($x,$y);'));
 
 			if($attributes===array())
 				$attributes=null;
 
-			$newData=array_diff($data,$attributeNames);
+			// array_udiff must not be used here because when error_reporting is -1 notice will happen
+			// since $data array contains not just scalar string values
+			$newData=array_udiff($data,$attributeNames,
+				create_function('$x,$y','return !is_string($x) || !is_string($y) ? -1 : strcmp($x,$y);'));
 		}
 
 		$valid=$owner->validate($attributes,$clearErrors);
@@ -109,12 +115,18 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			else
 			{
 				$attributeNames=$owner->attributeNames();
-				$attributes=array_intersect($data,$attributeNames);
+				// array_intersect must not be used here because when error_reporting is -1 notice will happen
+				// since $data array contains not just scalar string values
+				$attributes=array_uintersect($data,$attributeNames,
+					create_function('$x,$y','return !is_string($x) || !is_string($y) ? -1 : strcmp($x,$y);'));
 
 				if($attributes===array())
 					$attributes=null;
 
-				$newData=array_diff($data,$attributeNames);
+				// array_diff must not be used here because when error_reporting is -1 notice will happen
+				// since $data array contains not just scalar string values
+				$newData=array_udiff($data,$attributeNames,
+					create_function('$x,$y','return !is_string($x) || !is_string($y) ? -1 : strcmp($x,$y);'));
 			}
 
 			$ownerTableSchema=$owner->getTableSchema();
