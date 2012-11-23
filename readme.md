@@ -1,6 +1,8 @@
 WithRelatedBehavior
 ===================
 
+[![Build Status](https://secure.travis-ci.org/yiiext/with-related-behavior.png?branch=master)](https://travis-ci.org/yiiext/with-related-behavior)
+
 The most powerful and smart expansion for validate/saving/linking/unlinking.
 
 This behavior allows you to validate, insert, update and save a model along with
