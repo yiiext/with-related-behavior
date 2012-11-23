@@ -1,6 +1,8 @@
 WithRelatedBehavior
 ===================
 
+[![Build Status](https://secure.travis-ci.org/resurtm/with-related-behavior.png?branch=travis-ci-2)](https://travis-ci.org/resurtm/with-related-behavior)
+
 The most powerful and smart expansion for validate/saving/linking/unlinking.
 
 This behavior allows you to validate, insert, update and save a model along with
