@@ -39,7 +39,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			unset($realAttributes['db']); // has nothing in common with the application logic
 			$realAttributes=array_keys($realAttributes);
 
-			// mix virtual attributes (represents database table columns) *WITH* real model class attributes
+			// mixing virtual attributes (represents database table columns) *WITH* real model class attributes
 			$attributeNames=array_merge($realAttributes,$owner->attributeNames());
 			// array_intersect must not be used here because when error_reporting is -1 notice will happen
 			// since $data array contains not just scalar string values
@@ -120,7 +120,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			}
 			else
 			{
-				// *NO* mixing virtual attributes (represents database table columns) *WITH* real model class attributes
+				// *NOT* mixing virtual attributes (represents database table columns) *WITH* real model class attributes
 				// since real model attributes should not be persisted in the database
 				// it was actual only for validation part
 				$attributeNames=$owner->attributeNames();

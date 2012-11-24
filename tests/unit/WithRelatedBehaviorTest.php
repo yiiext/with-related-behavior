@@ -161,7 +161,7 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		$this->assertNotEmpty($user1->errors);
 		$this->assertFalse(User::model()->exists('name="Linus1 Torvalds"'));
 
-		// validation should success because 'Morton' string is short enough to fit
+		// validation should pass because 'Morton' string is short enough to fit validation rules
 		$user2=new User('firstNameLastName');
 		$user2->group=new Group();
 		$user2->group->name='Linux Kernel Team';
@@ -173,7 +173,7 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		$this->assertTrue(User::model()->exists('name="Andrew1 Morton"'));
 
 		// 2. skip models validation
-		// validation should fail because 'Torvalds' string is too long
+		// validation should pass because 'Torvalds' string is not validated at all
 		$user3=new User('firstNameLastName');
 		$user3->group=new Group();
 		$user3->group->name='Linux Kernel Team';
@@ -184,7 +184,7 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		$this->assertEmpty($user3->errors);
 		$this->assertTrue(User::model()->exists('name="Linus2 Torvalds"'));
 
-		// validation should success because 'Morton' string is short enough to fit
+		// validation should pass because 'Morton' string is not validated at all
 		$user4=new User('firstNameLastName');
 		$user4->group=new Group();
 		$user4->group->name='Linux Kernel Team';
@@ -196,7 +196,7 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		$this->assertTrue(User::model()->exists('name="Andrew2 Morton"'));
 
 		// 3. validate all models but don't validate real attributes
-		// validation should fail because 'Torvalds' string is too long
+		// validation should fail because 'Torvalds' string is not validated at all
 		$user5=new User('firstNameLastName');
 		$user5->group=new Group();
 		$user5->group->name='Linux Kernel Team';
@@ -207,7 +207,7 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		$this->assertEmpty($user5->errors);
 		$this->assertTrue(User::model()->exists('name="Linus3 Torvalds"'));
 
-		// validation should success because 'Morton' string is short enough to fit
+		// validation should pass because 'Morton' string is not validated at all
 		$user6=new User('firstNameLastName');
 		$user6->group=new Group();
 		$user6->group->name='Linux Kernel Team';
