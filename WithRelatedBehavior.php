@@ -61,6 +61,9 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 			$related=$owner->getRelated($name);
 
+			if($related===null)
+				continue;
+
 			if(is_array($related))
 			{
 				foreach($related as $model)
@@ -153,10 +156,12 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 				{
 					$related=$owner->getRelated($name);
 
-					if($data!==null)
-						$this->save(false,$data,$related);
-					else
-						$related->getIsNewRecord() ? $related->insert() : $related->update();
+					if($related!==null){
+						if($data!==null)
+							$this->save(false,$data,$related);
+						else
+							$related->getIsNewRecord() ? $related->insert() : $related->update();
+					}
 
 					$relatedTableSchema=CActiveRecord::model($relatedClass)->getTableSchema();
 					$fks=$relations[$name]->foreignKey;
@@ -188,8 +193,11 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 									$pk=$relatedTableSchema->primaryKey;
 							}
 						}
-
-						$owner->$fk=$related->$pk;
+						if($related===null){
+							$owner->$fk=null;
+						}else{
+							$owner->$fk=$related->$pk;
+						}
 					}
 				}
 				else
