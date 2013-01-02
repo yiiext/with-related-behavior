@@ -45,7 +45,7 @@ DROP TABLE IF EXISTS `user`;
 
 CREATE TABLE `user` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `group_id` int(10) unsigned NOT NULL,
+  `group_id` int(10) unsigned DEFAULT NULL,
   `name` varchar(100) NOT NULL,
   PRIMARY KEY (`id`)
 );
