@@ -25,8 +25,8 @@ class User extends CActiveRecord
 	{
 		return array(
 			array('name','required'),
-			array('firstName,lastName','required','on'=>'firstNameLastName'),
-			array('firstName,lastName','length','min'=>3,'max'=>7,'on'=>'firstNameLastName'),
+			array('firstName,lastName','required','on'=>'scenario'),
+			array('firstName,lastName','length','min'=>3,'max'=>7,'on'=>'scenario'),
 		);
 	}
 
@@ -42,7 +42,7 @@ class User extends CActiveRecord
 		if(!parent::beforeSave())
 			return false;
 
-		if($this->scenario=='firstNameLastName')
+		if($this->isAttributeSafe('firstName') && $this->isAttributeSafe('lastName'))
 			$this->name=$this->firstName.' '.$this->lastName;
 
 		return true;

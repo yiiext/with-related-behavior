@@ -146,76 +146,120 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		$this->assertEquals('tag2 update',$article->tags[1]->name);
 		$this->assertEquals('tag3',$article->tags[2]->name);
 		$this->assertEquals('tag4',$article->tags[3]->name);
+	}
 
-		// test real non-virtual class attributes User::$firstName and User::$lastName
-		// they are not represented in the database table
+	/**
+	 * Tests non-database class attributes validation.
+	 * User::$firstName and User::$lastName attributes validation will be tested.
+	 */
+	public function testClassAttributesValidation()
+	{
 		// 1. validate all models
-		// validation should fail because 'Torvalds' string is too long
-		$user1=new User('firstNameLastName');
+
+		// validation will fail because 'Torvalds' string is too long
+		$user1=new User('scenario');
 		$user1->group=new Group();
 		$user1->group->name='Linux Kernel Team';
 		$user1->attributes=array('firstName'=>'Linus1','lastName'=>'Torvalds','name'=>'ignoredString');
 		$result=$user1->withRelated->save(true,array('group','firstName','lastName','name','group_id'));
+
 		$this->assertFalse($result);
 		$this->assertEmpty($user1->group->errors);
 		$this->assertNotEmpty($user1->errors);
 		$this->assertFalse(User::model()->exists('name="Linus1 Torvalds"'));
 
-		// validation should pass because 'Morton' string is short enough to fit validation rules
-		$user2=new User('firstNameLastName');
+		// validation will be successful because 'Morton' string is short enough
+		$user2=new User('scenario');
 		$user2->group=new Group();
 		$user2->group->name='Linux Kernel Team';
 		$user2->attributes=array('firstName'=>'Andrew1','lastName'=>'Morton','name'=>'ignoredString');
 		$result=$user2->withRelated->save(true,array('group','firstName','lastName','name','group_id'));
+
 		$this->assertTrue($result);
 		$this->assertEmpty($user2->group->errors);
 		$this->assertEmpty($user2->errors);
 		$this->assertTrue(User::model()->exists('name="Andrew1 Morton"'));
 
 		// 2. skip models validation
-		// validation should pass because 'Torvalds' string is not validated at all
-		$user3=new User('firstNameLastName');
+
+		// validation will be successful because 'Torvalds' string is not validated
+		// note: validation disabled by passing false value as first argument to the WithRelatedBehavior::save() method
+		$user3=new User('scenario');
 		$user3->group=new Group();
 		$user3->group->name='Linux Kernel Team';
 		$user3->attributes=array('firstName'=>'Linus2','lastName'=>'Torvalds','name'=>'ignoredString');
 		$result=$user3->withRelated->save(false,array('group','firstName','lastName','name','group_id'));
+
 		$this->assertTrue($result);
 		$this->assertEmpty($user3->group->errors);
 		$this->assertEmpty($user3->errors);
 		$this->assertTrue(User::model()->exists('name="Linus2 Torvalds"'));
 
-		// validation should pass because 'Morton' string is not validated at all
-		$user4=new User('firstNameLastName');
+		// validation will be successful because 'Morton' string is not validated
+		// note: validation disabled by passing false value as first argument to the WithRelatedBehavior::save() method
+		$user4=new User('scenario');
 		$user4->group=new Group();
 		$user4->group->name='Linux Kernel Team';
 		$user4->attributes=array('firstName'=>'Andrew2','lastName'=>'Morton','name'=>'ignoredString');
 		$result=$user4->withRelated->save(false,array('group','firstName','lastName','name','group_id'));
+
 		$this->assertTrue($result);
 		$this->assertEmpty($user4->group->errors);
 		$this->assertEmpty($user4->errors);
 		$this->assertTrue(User::model()->exists('name="Andrew2 Morton"'));
 
-		// 3. validate all models but don't validate real attributes
-		// validation should fail because 'Torvalds' string is not validated at all
-		$user5=new User('firstNameLastName');
+		// 3. validate all models but don't validate class attributes
+
+		// validation will be successful because 'Torvalds' string is not validated
+		// note: 'Linus3 Torvalds' string saved to the database since $firstName and $lastName attributes are safe
+		$user5=new User('scenario');
 		$user5->group=new Group();
 		$user5->group->name='Linux Kernel Team';
 		$user5->attributes=array('firstName'=>'Linus3','lastName'=>'Torvalds','name'=>'ignoredString');
 		$result=$user5->withRelated->save(true,array('group','name','group_id'));
+
 		$this->assertTrue($result);
 		$this->assertEmpty($user5->group->errors);
 		$this->assertEmpty($user5->errors);
 		$this->assertTrue(User::model()->exists('name="Linus3 Torvalds"'));
 
-		// validation should pass because 'Morton' string is not validated at all
-		$user6=new User('firstNameLastName');
+		// validation will be successful because 'Morton' string is not validated
+		// note: 'Andrew3 Morton' string saved to the database since $firstName and $lastName attributes are safe
+		$user6=new User('scenario');
 		$user6->group=new Group();
 		$user6->group->name='Linux Kernel Team';
 		$user6->attributes=array('firstName'=>'Andrew3','lastName'=>'Morton','name'=>'ignoredString');
 		$result=$user6->withRelated->save(true,array('group','name','group_id'));
+
 		$this->assertTrue($result);
 		$this->assertEmpty($user6->group->errors);
 		$this->assertEmpty($user6->errors);
 		$this->assertTrue(User::model()->exists('name="Andrew3 Morton"'));
+
+		// 4. validate real class attributes validation of the related models
+
+		// validation will fail because 'Linux Kernel Team' string is too long to pass Group model validation rules
+		$user7=new User('scenario');
+		$user7->group=new Group('scenario');
+		$user7->group->attributes=array('otherName'=>'Linux Kernel Team','name'=>'ignoredString');
+		$user7->attributes=array('firstName'=>'Alan1','lastName'=>'Cox','name'=>'ignoredString');
+		$result=$user7->withRelated->save(true,array('group'=>array('otherName','name'),'firstName','lastName','name','group_id'));
+
+		$this->assertFalse($result);
+		$this->assertNotEmpty($user7->group->errors);
+		$this->assertEmpty($user7->errors);
+		$this->assertFalse(User::model()->exists('name="Alan1 Cox"'));
+
+		// validation will be successful because 'Linux' string is short enough to fit Group model validation rules
+		$user8=new User('scenario');
+		$user8->group=new Group('scenario');
+		$user8->group->attributes=array('otherName'=>'Linux','name'=>'ignoredString');
+		$user8->attributes=array('firstName'=>'Alan2','lastName'=>'Cox','name'=>'ignoredString');
+		$result=$user8->withRelated->save(true,array('group'=>array('otherName','name'),'firstName','lastName','name','group_id'));
+
+		$this->assertTrue($result);
+		$this->assertEmpty($user8->group->errors);
+		$this->assertEmpty($user8->errors);
+		$this->assertTrue(User::model()->exists('name="Alan2 Cox"'));
 	}
 }

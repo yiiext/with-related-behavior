@@ -10,7 +10,7 @@
  * Allows you to save related models along with the main model.
  * All relation types are supported.
  *
- * @version 0.64
+ * @version 0.65
  * @package yiiext.with-related-behavior
  */
 class WithRelatedBehavior extends CActiveRecordBehavior
@@ -34,13 +34,13 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 		}
 		else
 		{
-			// retrieve real class attributes
-			$realAttributes=get_class_vars(get_class($owner));
-			unset($realAttributes['db']); // has nothing in common with the application logic
-			$realAttributes=array_keys($realAttributes);
+			// retrieve real class attributes that was specified in the class declaration
+			$classAttributes=get_class_vars(get_class($owner));
+			unset($classAttributes['db']); // has nothing in common with the application logic
+			$classAttributes=array_keys($classAttributes);
 
-			// mixing virtual attributes (represents database table columns) *WITH* real model class attributes
-			$attributeNames=array_merge($realAttributes,$owner->attributeNames());
+			// mixing virtual attributes that represents database table columns with real class attributes
+			$attributeNames=array_merge($classAttributes,$owner->attributeNames());
 			// array_intersect must not be used here because when error_reporting is -1 notice will happen
 			// since $data array contains not just scalar string values
 			$attributes=array_uintersect($data,$attributeNames,
@@ -120,9 +120,8 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			}
 			else
 			{
-				// *NOT* mixing virtual attributes (represents database table columns) *WITH* real model class attributes
-				// since real model attributes should not be persisted in the database
-				// it was actual only for validation part
+				// not mixing virtual attributes that represents database table columns with real class attributes
+				// since real class attributes shouldn't be persisted in the database, it's actual only for validation part
 				$attributeNames=$owner->attributeNames();
 				// array_intersect must not be used here because when error_reporting is -1 notice will happen
 				// since $data array contains not just scalar string values
