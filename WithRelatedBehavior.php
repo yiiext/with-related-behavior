@@ -10,7 +10,7 @@
  * Allows you to save related models along with the main model.
  * All relation types are supported.
  *
- * @version 0.65
+ * @version 0.66
  * @package yiiext.with-related-behavior
  */
 class WithRelatedBehavior extends CActiveRecordBehavior
@@ -39,8 +39,18 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			unset($classAttributes['db']); // has nothing in common with the application logic
 			$classAttributes=array_keys($classAttributes);
 
+			// retrieve virtual class attributes that wasn't declared in the class declaration but have
+			// getter and/or setter, so they can be used as arbitrary attribute
+			$virtualAttributes=array();
+			foreach($data as $name)
+			{
+				if(is_string($name) && (method_exists($owner,'get'.ucfirst($name)) || method_exists($owner,'set'.ucfirst($name))))
+					$virtualAttributes[]=$name;
+			}
+
 			// mixing virtual attributes that represents database table columns with real class attributes
-			$attributeNames=array_merge($classAttributes,$owner->attributeNames());
+			// and with virtual attributes with getters and/or setters
+			$attributeNames=array_merge($virtualAttributes,array_merge($classAttributes,$owner->attributeNames()));
 			// array_intersect must not be used here because when error_reporting is -1 notice will happen
 			// since $data array contains not just scalar string values
 			$attributes=array_uintersect($data,$attributeNames,
