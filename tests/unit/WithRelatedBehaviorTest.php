@@ -262,4 +262,30 @@ class WithRelatedBehaviorTest extends CDbTestCase
 		$this->assertEmpty($user8->errors);
 		$this->assertTrue(User::model()->exists('name="Alan2 Cox"'));
 	}
+
+	/**
+	 * Tests virtual attributes that was declared by creating getter and/or setter.
+	 */
+	public function testVirtualAttributesValidation()
+	{
+		$group=new Group();
+		$group->name='test';
+		$group->save();
+
+		$user1=new User('scenario2');
+		$user1->age=14;
+		$user1->name='Vasya';
+		$user1->group_id=$group->id;
+		$this->assertFalse($user1->withRelated->save(true,array('id','age','name','group_id')));
+		$this->assertTrue($user1->hasErrors());
+		$this->assertNotEmpty($user1->getErrors());
+
+		$user2=new User('scenario2');
+		$user2->age=17;
+		$user2->name='Petya';
+		$user2->group_id=$group->id;
+		$this->assertTrue($user2->withRelated->save(true,array('id','age','name','group_id')));
+		$this->assertFalse($user2->hasErrors());
+		$this->assertEmpty($user2->getErrors());
+	}
 }

@@ -3,6 +3,7 @@ class User extends CActiveRecord
 {
 	public $firstName;
 	public $lastName;
+	private $_age;
 
 	public static function model($className=__CLASS__)
 	{
@@ -25,8 +26,12 @@ class User extends CActiveRecord
 	{
 		return array(
 			array('name','required'),
+
 			array('firstName,lastName','required','on'=>'scenario'),
 			array('firstName,lastName','length','min'=>3,'max'=>7,'on'=>'scenario'),
+
+			array('age','required','on'=>'scenario2'),
+			array('age','numerical','min'=>16,'on'=>'scenario2'),
 		);
 	}
 
@@ -46,5 +51,19 @@ class User extends CActiveRecord
 			$this->name=$this->firstName.' '.$this->lastName;
 
 		return true;
+	}
+
+	public function getAge()
+	{
+		if($this->_age===null)
+		{
+			$this->_age=18;
+		}
+		return $this->_age;
+	}
+
+	public function setAge($age)
+	{
+		$this->_age=$age;
 	}
 }
