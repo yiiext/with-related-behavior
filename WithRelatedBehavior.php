@@ -10,6 +10,9 @@
  * Allows you to save related models along with the main model.
  * All relation types are supported.
  *
+ * @property CActiveRecord $owner
+ * @method CActiveRecord getOwner()
+ *
  * @version 0.65
  * @package yiiext.with-related-behavior
  */
@@ -65,6 +68,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			if(!$owner->hasRelated($name))
 				continue;
 
+			/** @var CActiveRecord|CActiveRecord[] $related */
 			$related=$owner->getRelated($name);
 
 			if(is_array($related))
@@ -90,11 +94,49 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 	}
 
 	/**
+	 * @param array|string $foreignKey
+	 * @param CDbTableSchema $ownerTableSchema
+	 * @param CDbTableSchema $dependentTableSchema
+	 * @return array
+	 */
+	protected function getDependencyAttributes($foreignKey, $ownerTableSchema, $dependentTableSchema)
+	{
+		$dbSchema = $this->getOwner()->getDbConnection()->getSchema();
+		$map = array();
+
+		if(is_string($foreignKey))
+			$foreignKey=preg_split('/\s*,\s*/',$foreignKey,-1,PREG_SPLIT_NO_EMPTY);
+
+		foreach($foreignKey as $fk=>$pk)
+		{
+			if(is_int($fk))
+			{
+				$index = $fk;
+				$fk = $pk;
+
+				if(isset($ownerTableSchema->foreignKeys[$fk]) && $dbSchema->compareTableNames($dependentTableSchema->rawName,$ownerTableSchema->foreignKeys[$fk][0]))
+					$pk=$ownerTableSchema->foreignKeys[$fk][1];
+				else // FK constraints undefined
+				{
+					if(is_array($dependentTableSchema->primaryKey)) // composite PK
+						$pk=$dependentTableSchema->primaryKey[$index];
+					else
+						$pk=$dependentTableSchema->primaryKey;
+				}
+			}
+			$map[$fk] = $pk;
+		}
+		return $map;
+	}
+
+	/**
 	 * Save main model and all it's related models recursively.
 	 * @param bool $runValidation whether to perform validation before saving the record.
 	 * @param array $data attributes and relations.
 	 * @param CActiveRecord $owner for internal needs.
 	 * @return boolean whether the saving succeeds.
+	 * @throws CDbException
+	 * @throws Exception
 	 */
 	public function save($runValidation=true,$data=null,$owner=null)
 	{
@@ -106,6 +148,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			$owner=$this->getOwner();
 		}
 
+		/** @var CDbConnection $db */
 		$db=$owner->getDbConnection();
 
 		if($db->getCurrentTransaction()===null)
@@ -138,6 +181,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			}
 
 			$ownerTableSchema=$owner->getTableSchema();
+			/** @var CDbCommandBuilder $builder */
 			$builder=$owner->getCommandBuilder();
 			$schema=$builder->getSchema();
 			$relations=$owner->getMetaData()->relations;
@@ -159,45 +203,19 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 				if($relationClass===CActiveRecord::BELONGS_TO)
 				{
+					/** @var CActiveRecord|CActiveRecord[] $related */
 					$related=$owner->getRelated($name);
+					$relatedTableSchema=$related->getTableSchema();
 
 					if($data!==null)
 						$this->save(false,$data,$related);
 					else
 						$related->getIsNewRecord() ? $related->insert() : $related->update();
 
-					$relatedTableSchema=CActiveRecord::model($relatedClass)->getTableSchema();
-					$fks=$relations[$name]->foreignKey;
-
-					if(is_string($fks))
-						$fks=preg_split('/\s*,\s*/',$fks,-1,PREG_SPLIT_NO_EMPTY);
-
-					foreach($fks as $i=>$fk)
-					{
-						if(!is_int($i))
-						{
-							$pk=$fk;
-							$fk=$i;
-						}
-
-						if(!isset($ownerTableSchema->columns[$fk]))
-							throw new CDbException(Yii::t('yiiext','The relation "{relation}" in active record class "{class}" is specified with an invalid foreign key "{key}". There is no such column in the table "{table}".',
-								array('{class}'=>get_class($owner),'{relation}'=>$name,'{key}'=>$fk,'{table}'=>$ownerTableSchema->name)));
-
-						if(is_int($i))
-						{
-							if(isset($ownerTableSchema->foreignKeys[$fk]) && $schema->compareTableNames($relatedTableSchema->rawName,$ownerTableSchema->foreignKeys[$fk][0]))
-								$pk=$ownerTableSchema->foreignKeys[$fk][1];
-							else // FK constraints undefined
-							{
-								if(is_array($relatedTableSchema->primaryKey)) // composite PK
-									$pk=$relatedTableSchema->primaryKey[$i];
-								else
-									$pk=$relatedTableSchema->primaryKey;
-							}
-						}
-
-						$owner->$fk=$related->$pk;
+					$fks = $relations[$name]->foreignKey;
+					$map = $this->getDependencyAttributes($fks, $relatedTableSchema, $ownerTableSchema);
+					foreach ($map as $fk => $pk) {
+						$owner->$fk = $related->$pk;
 					}
 				}
 				else
@@ -211,95 +229,34 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 			{
 				list($relationClass,$relatedClass,$fks,$name,$data)=$pack;
 				$related=$owner->getRelated($name);
+				$relatedTableSchema=CActiveRecord::model($relatedClass)->getTableSchema();
 
 				switch($relationClass)
 				{
 					case CActiveRecord::HAS_ONE:
-						$relatedTableSchema=CActiveRecord::model($relatedClass)->getTableSchema();
-
-						if(is_string($fks))
-							$fks=preg_split('/\s*,\s*/',$fks,-1,PREG_SPLIT_NO_EMPTY);
-
-						foreach($fks as $i=>$fk)
-						{
-							if(!is_int($i))
-							{
-								$pk=$fk;
-								$fk=$i;
-							}
-
-							if(!isset($relatedTableSchema->columns[$fk]))
-								throw new CDbException(Yii::t('yiiext','The relation "{relation}" in active record class "{class}" is specified with an invalid foreign key "{key}". There is no such column in the table "{table}".',
-									array('{class}'=>get_class($owner),'{relation}'=>$name,'{key}'=>$fk,'{table}'=>$relatedTableSchema->name)));
-
-							if(is_int($i))
-							{
-								if(isset($relatedTableSchema->foreignKeys[$fk]) && $schema->compareTableNames($ownerTableSchema->rawName,$relatedTableSchema->foreignKeys[$fk][0]))
-									$pk=$relatedTableSchema->foreignKeys[$fk][1];
-								else // FK constraints undefined
-								{
-									if(is_array($ownerTableSchema->primaryKey)) // composite PK
-										$pk=$ownerTableSchema->primaryKey[$i];
-									else
-										$pk=$ownerTableSchema->primaryKey;
-								}
-							}
-
-							$related->$fk=$owner->$pk;
+						$map = $this->getDependencyAttributes($fks, $ownerTableSchema, $relatedTableSchema);
+						foreach ($map as $fk => $pk) {
+							$related->$fk = $owner->$pk;
 						}
 
 						if($data===null)
 							$related->getIsNewRecord() ? $related->insert() : $related->update();
 						else
 							$this->save(false,$data,$related);
-					break;
+						break;
 					case CActiveRecord::HAS_MANY:
-						$relatedTableSchema=CActiveRecord::model($relatedClass)->getTableSchema();
-
-						if(is_string($fks))
-							$fks=preg_split('/\s*,\s*/',$fks,-1,PREG_SPLIT_NO_EMPTY);
-
-						$map=array();
-
-						foreach($fks as $i=>$fk)
-						{
-							if(!is_int($i))
-							{
-								$pk=$fk;
-								$fk=$i;
-							}
-
-							if(!isset($relatedTableSchema->columns[$fk]))
-								throw new CDbException(Yii::t('yiiext','The relation "{relation}" in active record class "{class}" is specified with an invalid foreign key "{key}". There is no such column in the table "{table}".',
-									array('{class}'=>get_class($owner),'{relation}'=>$name,'{key}'=>$fk,'{table}'=>$relatedTableSchema->name)));
-
-							if(is_int($i))
-							{
-								if(isset($relatedTableSchema->foreignKeys[$fk]) && $schema->compareTableNames($ownerTableSchema->rawName,$relatedTableSchema->foreignKeys[$fk][0]))
-									$pk=$relatedTableSchema->foreignKeys[$fk][1];
-								else // FK constraints undefined
-								{
-									if(is_array($ownerTableSchema->primaryKey)) // composite PK
-										$pk=$ownerTableSchema->primaryKey[$i];
-									else
-										$pk=$ownerTableSchema->primaryKey;
-								}
-							}
-
-							$map[$pk]=$fk;
-						}
-
+						$map = $this->getDependencyAttributes($fks, $ownerTableSchema, $relatedTableSchema);
 						foreach($related as $model)
 						{
-							foreach($map as $pk=>$fk)
-								$model->$fk=$owner->$pk;
+							foreach($map as $fk=>$pk)
+								$model->$fk = $owner->$pk;
 
 							if($data===null)
 								$model->getIsNewRecord() ? $model->insert() : $model->update();
 							else
 								$this->save(false,$data,$model);
 						}
-					break;
+						break;
 					case CActiveRecord::MANY_MANY:
 						if(!preg_match('/^\s*(.*?)\((.*)\)\s*$/',$fks,$matches))
 							throw new CDbException(Yii::t('yiiext','The relation "{relation}" in active record class "{class}" is specified with an invalid foreign key. The format of the foreign key must be "joinTable(fk1,fk2,...)".',
@@ -309,7 +266,6 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 							throw new CDbException(Yii::t('yiiext','The relation "{relation}" in active record class "{class}" is not specified correctly: the join table "{joinTable}" given in the foreign key cannot be found in the database.',
 								array('{class}'=>get_class($owner),'{relation}'=>$name,'{joinTable}'=>$matches[1])));
 
-						$relatedTableSchema=CActiveRecord::model($relatedClass)->getTableSchema();
 						$fks=preg_split('/\s*,\s*/',$matches[2],-1,PREG_SPLIT_NO_EMPTY);
 						$ownerMap=array();
 						$relatedMap=array();
@@ -402,7 +358,7 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 
 						foreach($insertAttributes as $attributes)
 							$builder->createInsertCommand($joinTable,$attributes)->execute();
-					break;
+						break;
 				}
 			}
 
@@ -442,13 +398,13 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 		switch($relationClass)
 		{
 			case CActiveRecord::BELONGS_TO:
-			break;
+				break;
 			case CActiveRecord::HAS_ONE:
-			break;
+				break;
 			case CActiveRecord::HAS_MANY:
-			break;
+				break;
 			case CActiveRecord::MANY_MANY:
-			break;
+				break;
 		}
 	}
 
@@ -474,13 +430,13 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 		switch($relationClass)
 		{
 			case CActiveRecord::BELONGS_TO:
-			break;
+				break;
 			case CActiveRecord::HAS_ONE:
-			break;
+				break;
 			case CActiveRecord::HAS_MANY:
-			break;
+				break;
 			case CActiveRecord::MANY_MANY:
-			break;
+				break;
 		}
 	}
 }
