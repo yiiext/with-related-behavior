@@ -5,6 +5,7 @@ return array(
 
 	'import'=>array(
 		'application.models.*',
+		'ext.WithRelatedBehavior',
 	),
 
 	'components'=>array(

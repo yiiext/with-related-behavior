@@ -33,7 +33,7 @@ class User extends CActiveRecord
 	public function behaviors()
 	{
 		return array(
-			'withRelated'=>'ext.WithRelatedBehavior',
+			'withRelated'=>'WithRelatedBehavior',
 		);
 	}
 
