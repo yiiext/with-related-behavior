@@ -212,7 +212,7 @@ $tag2->name='save';
 
 $post->tags=array($tag1,$tag2);
 
-$post->withRelated->save(true,array('post'));
+$post->withRelated->save(true,array('tags'));
 ```
 
 #### BELONGS_TO
