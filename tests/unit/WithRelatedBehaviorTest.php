@@ -149,6 +149,61 @@ class WithRelatedBehaviorTest extends CDbTestCase
 	}
 
 	/**
+	 * @author Anton Tyutin @AntonTyutin
+	 */
+	public function testUnsetRelations()
+	{
+		$tag1=new Tag;
+		$tag2=new Tag;
+
+		$tag1->name='tag1';
+		$tag2->name='tag2';
+
+		$group=new Group;
+		$group->name = 'Group';
+
+		$user=new User;
+		$user->name = 'User';
+		$user->group = $group;
+
+		$article=new Article;
+		$article->title = 'Article';
+		$article->user = $user;
+		$article->tags=array($tag1,$tag2);
+
+		$result=$article->withRelated->save(true,array(
+			'user' => array("group"),
+			'tags',
+		));
+		$this->assertTrue($result);
+
+		$article=Article::model()->with('tags')->find();
+		$this->assertEquals(2,count($article->tags));
+
+		// remove one tag
+		$article->tags = array_slice($article->tags, 1);
+
+		$result=$article->withRelated->save(true,array(
+			'tags',
+		));
+		$this->assertTrue($result);
+
+		$article=Article::model()->with('tags')->find();
+		$this->assertEquals(1,count($article->tags));
+
+		// clear all tags
+		$article->tags = array();
+
+		$result=$article->withRelated->save(true,array(
+			'tags',
+		));
+		$this->assertTrue($result);
+
+		$article=Article::model()->with('tags')->find();
+		$this->assertEquals(0,count($article->tags));
+	}
+
+	/**
 	 * Tests non-database class attributes validation.
 	 * User::$firstName and User::$lastName attributes validation will be tested.
 	 */
