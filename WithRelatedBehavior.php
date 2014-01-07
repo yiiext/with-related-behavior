@@ -343,15 +343,15 @@ class WithRelatedBehavior extends CActiveRecordBehavior
 							foreach($relatedMap as $pk=>$fk)
 								$joinTableAttributes[$fk]=$model->$pk;
 
-							if(!$newFlag)
-								$deleteAttributes[]=$joinTableAttributes;
-
 							$insertAttributes[]=$joinTableAttributes;
 						}
 
+						foreach($ownerMap as $pk=>$fk)
+							$deleteAttributes[$pk]=$owner->$pk;
+
 						if($deleteAttributes!==array())
 						{
-							$condition=$builder->createInCondition($joinTable,array_merge(array_values($ownerMap),array_values($relatedMap)),$deleteAttributes);
+							$condition=$builder->createInCondition($joinTable,array_values($ownerMap),$deleteAttributes);
 							$criteria=$builder->createCriteria($condition);
 							$builder->createDeleteCommand($joinTable,$criteria)->execute();
 						}
